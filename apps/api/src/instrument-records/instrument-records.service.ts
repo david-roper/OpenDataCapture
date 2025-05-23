@@ -172,6 +172,7 @@ export class InstrumentRecordsService {
                       sessionType: record.session.type,
                       subjectAge: record.subject.dateOfBirth ? yearsPassed(record.subject.dateOfBirth) : null,
                       subjectId: record.subject.id,
+                      groupId: record.subject.groupIds[0] ?? DEFAULT_GROUP_NAME,
                       subjectSex: record.subject.sex,
                       timestamp: record.date.toISOString(),
                       value: typeof dataValue === 'string' ? dataValue : JSON.stringify(dataValue)
@@ -191,6 +192,7 @@ export class InstrumentRecordsService {
               subjectAge: record.subject.dateOfBirth ? yearsPassed(record.subject.dateOfBirth) : null,
               subjectId: record.subject.id,
               subjectSex: record.subject.sex,
+              groupId: record.subject.groupIds[0] ?? DEFAULT_GROUP_NAME,
               timestamp: record.date.toISOString(),
               value: measureValue
             });
@@ -206,6 +208,7 @@ export class InstrumentRecordsService {
             subjectAge: record.subject.dateOfBirth ? yearsPassed(record.subject.dateOfBirth) : null,
             subjectId: record.subject.id,
             subjectSex: record.subject.sex,
+            groupId: record.subject.groupIds[0] ?? DEFAULT_GROUP_NAME,
             timestamp: record.date.toISOString(),
             value: measureValue
           });
