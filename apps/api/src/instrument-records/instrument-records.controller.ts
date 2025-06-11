@@ -2,7 +2,7 @@
 
 import { CurrentUser, ParseSchemaPipe, RouteAccess } from '@douglasneuroinformatics/libnest';
 import type { AppAbility } from '@douglasneuroinformatics/libnest';
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Query } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { InstrumentKind } from '@opendatacapture/runtime-core';
 import { z } from 'zod';
@@ -67,5 +67,12 @@ export class InstrumentRecordsController {
     @Query('groupId') groupId?: string
   ): Promise<{ [key: string]: { intercept: number; slope: number; stdErr: number } }> {
     return this.instrumentRecordsService.linearModel({ groupId, instrumentId }, { ability });
+  }
+
+  @ApiOperation({ description: 'Delete an Instrument Record', summary: 'Delete Record' })
+  @Delete('delete/:id')
+  @RouteAccess({ action: 'delete', subject: 'InstrumentRecord' })
+  deleteById(@CurrentUser('ability') ability: AppAbility, @Param('id') id: string) {
+    return this.instrumentRecordsService.deleteById(id, { ability });
   }
 }
