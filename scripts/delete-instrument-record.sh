@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # 
 # Delete a instrument record database entry
+set -e
 
 read -p "Enter file path to docker yaml file: " docker_file
 read -p "Enter the type of MongoDB instance (development or production): " instance_type
