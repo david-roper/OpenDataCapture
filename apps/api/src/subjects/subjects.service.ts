@@ -4,15 +4,14 @@ import { ConflictException, Injectable, NotFoundException } from '@nestjs/common
 import type { Prisma } from '@prisma/client';
 
 import type { EntityOperationOptions } from '@/core/types';
-import { InstrumentRecordsService } from '@/instrument-records/instrument-records.service';
 
 import { CreateSubjectDto } from './dto/create-subject.dto';
 
 @Injectable()
 export class SubjectsService {
   constructor(
-    @InjectModel('Subject') private readonly subjectModel: Model<'Subject'>,
-    private readonly instrumentRecordsService: InstrumentRecordsService
+    @InjectModel('Subject') private readonly subjectModel: Model<'Subject'>
+    // ,private readonly instrumentRecordsService: InstrumentRecordsService
   ) {}
 
   async addGroupForSubject(subjectId: string, groupId: string, { ability }: EntityOperationOptions = {}) {
@@ -88,7 +87,7 @@ export class SubjectsService {
 
   async deleteById(id: string, { ability }: EntityOperationOptions = {}) {
     const subject = await this.findById(id);
-    await this.instrumentRecordsService.deleteBySubjectId(id);
+    // await this.instrumentRecordsService.deleteBySubjectId(id);
     return this.subjectModel.delete({
       where: { AND: [accessibleQuery(ability, 'delete', 'Subject')], id: subject.id }
     });
