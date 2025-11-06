@@ -1,6 +1,6 @@
 import { CurrentUser, RouteAccess } from '@douglasneuroinformatics/libnest';
 import type { AppAbility } from '@douglasneuroinformatics/libnest';
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
 import type { Session } from '@prisma/client';
 
