@@ -1,4 +1,31 @@
+import type { Subject } from '@opendatacapture/schemas/subject';
+import type { Page } from '@playwright/test';
+
 import { expect, test } from '../support/fixtures';
+
+/**
+ * Stored custom identifiers are scoped by group name, and the form strips that scope before
+ * listing them, so the mocked ids carry a prefix the options must not show.
+ */
+const MOCK_GROUP_SCOPE = 'MockGroup';
+
+/**
+ * Serves a fixed subject list to the custom-identifier combobox, whose options are exactly the
+ * subjects the group has. Registered before navigating, because the route loader fetches them.
+ */
+async function mockSubjects(page: Page, customIdentifiers: string[]): Promise<void> {
+  const subjects: Subject[] = customIdentifiers.map((customIdentifier) => ({
+    createdAt: new Date(),
+    groupIds: [],
+    id: `${MOCK_GROUP_SCOPE}$${customIdentifier}`,
+    updatedAt: new Date()
+  }));
+  await page.route('**/v1/subjects*', async (route) => {
+    // Fulfilling from the real response keeps its status and CORS headers, since the API is a
+    // different origin to the app.
+    await route.fulfill({ json: subjects, response: await route.fetch() });
+  });
+}
 
 test.describe('start session', () => {
   test('should display the start session form @smoke', async ({ getPageModel }) => {
@@ -25,6 +52,39 @@ test.describe('start session', () => {
 
     await startSessionPage.selectIdentificationMethod('CUSTOM_ID');
     await startSessionPage.fillCustomIdentifier(`custom-${uniqueId}`, 'Male');
+    await startSessionPage.submitForm();
+
+    await expect(startSessionPage.successMessage).toBeVisible();
+  });
+
+  test('should offer every existing custom identifier as an option, with the group scope stripped', async ({
+    getPageModel,
+    page,
+    uniqueId
+  }) => {
+    const customIdentifiers = [`alpha-${uniqueId}`, `beta-${uniqueId}`, `gamma-${uniqueId}`];
+    await mockSubjects(page, customIdentifiers);
+
+    const startSessionPage = await getPageModel('/session/start-session');
+    await startSessionPage.selectIdentificationMethod('CUSTOM_ID');
+    await startSessionPage.openSubjectIdOptions();
+
+    await expect(startSessionPage.subjectIdOptions).toHaveText(customIdentifiers);
+  });
+
+  test('should start a session for a custom identifier selected from the options', async ({
+    getPageModel,
+    page,
+    uniqueId
+  }) => {
+    const customIdentifier = `selected-${uniqueId}`;
+    await mockSubjects(page, [customIdentifier, `other-${uniqueId}`]);
+
+    const startSessionPage = await getPageModel('/session/start-session');
+    await startSessionPage.selectIdentificationMethod('CUSTOM_ID');
+    await startSessionPage.selectSubjectId(customIdentifier);
+    await startSessionPage.sessionForm.locator('[name="subjectDateOfBirth"]').fill('1990-01-01');
+    await startSessionPage.sessionForm.locator('[name="subjectSex"]').selectOption('MALE');
     await startSessionPage.submitForm();
 
     await expect(startSessionPage.successMessage).toBeVisible();

@@ -8,6 +8,7 @@ export class StartSessionPage extends AppPage {
   readonly selectField: Locator;
   readonly sessionForm: Locator;
   readonly subjectIdField: Locator;
+  readonly subjectIdOptions: Locator;
   readonly successMessage: Locator;
 
   constructor(page: Page) {
@@ -18,6 +19,7 @@ export class StartSessionPage extends AppPage {
     this.successMessage = page.getByRole('heading', { name: 'Session Successfully Started' });
     this.errorMessages = page.getByTestId('error-message-text');
     this.subjectIdField = this.sessionForm.locator('[name="subjectId"]');
+    this.subjectIdOptions = page.getByTestId('subjectId-combobox-content').getByRole('option');
   }
 
   async fillCustomIdentifier(customIdentifier: string, sex: string) {
@@ -68,8 +70,21 @@ export class StartSessionPage extends AppPage {
     await sessionDate.fill(expectedSessionDate);
   }
 
+  /** Opens the custom-identifier combobox with no filter applied, so every option is listed. */
+  async openSubjectIdOptions() {
+    await this.subjectIdField.waitFor({ state: 'visible' });
+    await this.subjectIdField.click();
+    await this.subjectIdOptions.first().waitFor({ state: 'visible' });
+  }
+
   async selectIdentificationMethod(methodName: string) {
     await this.selectField.selectOption(methodName);
+  }
+
+  /** Picks an existing subject from the custom-identifier combobox. Typing does not set the value. */
+  async selectSubjectId(subjectId: string) {
+    await this.openSubjectIdOptions();
+    await this.$ref.getByTestId(`subjectId-combobox-item-${subjectId}`).click();
   }
 
   async submitForm() {
