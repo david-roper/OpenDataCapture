@@ -66,7 +66,8 @@ const $$FormInstrumentNumberField = <TLanguage extends InstrumentLanguage>(langu
 
 const $$FormInstrumentDateField = <TLanguage extends InstrumentLanguage>(language?: TLanguage) => {
   return $$FormInstrumentBaseField(language).extend({
-    kind: z.literal('date')
+    kind: z.literal('date'),
+    variant: z.enum(['date', 'datetime']).optional()
   }) satisfies z.ZodType<FormInstrument.DateField<TLanguage>>;
 };
 

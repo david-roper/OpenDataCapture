@@ -28,6 +28,16 @@ import type { FormInstrument } from '../instrument.form.js';
     >().toEqualTypeOf<FormInstrument.BooleanField>();
   }
 
+  /** Date Variants */
+  {
+    expectTypeOf<FormInstrument.DateField['variant']>().toEqualTypeOf<'date' | 'datetime' | undefined>();
+    expectTypeOf({
+      kind: 'date',
+      label: 'When',
+      variant: 'datetime'
+    } as const).toMatchTypeOf<FormInstrument.DateField>();
+  }
+
   /** Literal Keys */
   {
     expectTypeOf<
