@@ -33,6 +33,26 @@ describe('$$FormInstrument', () => {
     expect(result.success).toBe(true);
   });
 
+  const withDateField = (dateField: object) => ({
+    ...unilingualFormInstrument.instance,
+    content: { appointment: { kind: 'date', label: 'Appointment', ...dateField } }
+  });
+
+  // An undeclared variant would be stripped, so an uploaded instrument would render date-only.
+  it('should preserve the datetime variant of a date field rather than stripping it', () => {
+    const result = $$FormInstrument().safeParse(withDateField({ variant: 'datetime' }));
+    expect(result.success).toBe(true);
+    expect(result.data?.content).toHaveProperty('appointment.variant', 'datetime');
+  });
+
+  it('should parse a date field that omits its variant, so existing instruments stay valid', () => {
+    expect($$FormInstrument().safeParse(withDateField({})).success).toBe(true);
+  });
+
+  it('should reject a date field variant that is neither date nor datetime', () => {
+    expect($$FormInstrument().safeParse(withDateField({ variant: 'time' })).success).toBe(false);
+  });
+
   // Zod strips what it does not declare, and `apps/web` only validates in development while the
   // playground always does — so omitting `resetButton` here would drop the flag in exactly the places
   // an author tests their instrument, while leaving it intact in production.

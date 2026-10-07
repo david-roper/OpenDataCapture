@@ -96,6 +96,26 @@ export default defineInstrument({
 `;
 }
 
+/** A form with a single date field that asks for a time of day as well as a calendar day. */
+function dateTimeInstrumentSource(title: string): string {
+  return `
+import { defineInstrument } from '/runtime/v1/@opendatacapture/runtime-core';
+import { z } from '/runtime/v1/zod@3.x';
+
+export default defineInstrument({
+  kind: 'FORM',
+  language: 'en',
+  tags: ['Date Time'],
+  internal: { edition: 1, name: 'DATE_TIME' },
+  clientDetails: { estimatedDuration: 1, instructions: ['Submit the form'] },
+  content: { appointment: { kind: 'date', label: 'Appointment', variant: 'datetime' } },
+  details: { description: 'Date and time field', license: 'Apache-2.0', title: '${title}' },
+  measures: {},
+  validationSchema: z.object({ appointment: z.date() })
+});
+`;
+}
+
 // The first paint waits on the 13 MB esbuild download and the toolchain boot; the preview then
 // compiles on a 2 s poll, so the whole chain is slower than the suite's default expect timeout.
 const PREVIEW_TIMEOUT = 60_000;
@@ -244,5 +264,42 @@ test.describe('playground', () => {
     await playground.preview.getByRole('button', { name: 'Submit' }).click();
 
     await expect(playground.preview.getByText('Pet Name Measure')).toBeVisible();
+  });
+
+  // The preview validates the instrument before rendering it, so an undeclared variant would be
+  // stripped there and the field would fall back to a date-only input.
+  test('should render a datetime date field with a time input and submit the time chosen', async ({
+    page,
+    uniqueId
+  }) => {
+    const title = `Date Time ${uniqueId}`;
+    const playground = new PlaygroundPage(page);
+    await playground.goto(
+      generatePlaygroundURL({
+        baseURL: playgroundURL,
+        files: [{ content: dateTimeInstrumentSource(title), name: 'index.ts' }],
+        label: title
+      })
+    );
+
+    await playground.preview.getByRole('button', { name: 'Begin' }).click({ timeout: PREVIEW_TIMEOUT });
+    await playground.preview.getByTestId('datetime-date-trigger').click();
+    await playground.preview.getByTestId('datepicker').getByRole('button', { exact: true, name: '15' }).click();
+    await playground.preview.getByTestId('datetime-time-input').fill('13:45:00');
+
+    // The calendar opens on the current month, and the browser decides the timezone of the result.
+    const expected = await page.evaluate(() => {
+      const now = new Date();
+      return new Date(now.getFullYear(), now.getMonth(), 15, 13, 45, 0).toISOString();
+    });
+    const messages: string[] = [];
+    page.once('dialog', (dialog) => {
+      messages.push(dialog.message());
+      void dialog.dismiss();
+    });
+    await playground.preview.getByRole('button', { name: 'Submit' }).click();
+
+    await expect.poll(() => messages).toHaveLength(1);
+    expect(messages[0]).toContain(expected);
   });
 });
